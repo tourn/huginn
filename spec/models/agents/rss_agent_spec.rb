@@ -231,6 +231,13 @@ describe Agents::RssAgent do
       expect(event.payload['content']).to eq('<a href="http://showgoers.tv/">Showgoers</a>: <blockquote> <p>Showgoers is a Chrome browser extension to synchronize your Netflix player with someone else so that you can co-watch the same movie on different computers with no hassle. Syncing up your player is as easy as sharing a URL.</p> </blockquote>')
       expect(event.payload['description']).to eq('<a href="http://showgoers.tv/">Showgoers</a>: <blockquote> <p>Showgoers is a Chrome browser extension to synchronize your Netflix player with someone else so that you can co-watch the same movie on different computers with no hassle. Syncing up your player is as easy as sharing a URL.</p> </blockquote>')
     end
+
+    it "captures an enclosure" do
+      agent.check
+      event = agent.events.fourth
+      expect(event.payload['enclosure']).to eq({ "url" => "http://c.1tw.org/images/2015/itsy.png", "type" => "image/png", "length" => "48249" })
+      expect(event.payload['image']).to eq("http://c.1tw.org/images/2015/itsy.png")
+    end
   end
 
   describe 'logging errors with the feed url' do
