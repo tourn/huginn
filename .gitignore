@@ -1,3 +1,4 @@
+*.sw?
 *.rbc
 *.sassc
 .sass-cache
