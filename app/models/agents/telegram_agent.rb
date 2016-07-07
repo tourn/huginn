@@ -79,6 +79,7 @@ module Agents
     def send_telegram_message(method, params)
       params[:chat_id] = interpolated['chat_id']
       params[:parse_mode] = interpolated['parse_mode'] if interpolated['parse_mode'].present?
+      params[:disable_web_page_preview] = interpolated['disable_web_page_preview'] == 'true' if interpolated['disable_web_page_preview'].present?
       HTTMultiParty.post telegram_bot_uri(method), query: params
     end
 
