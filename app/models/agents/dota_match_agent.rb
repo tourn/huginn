@@ -48,9 +48,14 @@ module Agents
         interpolate_with(event) do
           result = event[:payload]
           fmt = format(result['result'])
+          memory['last'] = fmt
           create_event :payload => {'message' => fmt}
         end
       end
+    end
+
+    def working?
+      memory['last'].present?
     end
 
     #TODO probably move those into options
@@ -88,7 +93,7 @@ module Agents
       id = match['match_id']
 
       "#{player_names.join(", ")} #{win ? "won" : "lost"} #{mode} after #{time}. " +
-      format_sites(id) + '\n' +
+      format_sites(id) + "\n" +
       format_sprees(player_names, win)
     end
 

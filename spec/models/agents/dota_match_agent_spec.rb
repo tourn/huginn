@@ -20,12 +20,20 @@ fdescribe Agents::DotaMatchAgent do
         },
         'sites' => {
           'YASP' => 'http://yasp.co/matches/$',
-          'Dotabuff' => 'http://www.dotabuff.com/matches/$)'
+          'Dotabuff' => 'http://www.dotabuff.com/matches/$'
         }
       }
       @checker = Agents::DotaMatchAgent.new(:name => "dota", :options => @valid_options, :keep_events_for => 2.days)
       @checker.user = users(:bob)
       @checker.save!
+    end
+
+    describe '#working?' do
+      it 'checks if the last call formatted a message' do
+        expect(@checker).not_to be_working
+        @checker.receive([@win])
+        expect(@checker).to be_working
+      end
     end
 
     describe 'validation' do
