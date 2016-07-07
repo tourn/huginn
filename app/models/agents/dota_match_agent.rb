@@ -23,17 +23,29 @@ module Agents
           '56706937' => 'Jane'
         },
         'sites' => {
-          'YASP' => 'http://yasp.co/matches/#',
-          'Dotabuff' => 'http://www.dotabuff.com/matches/#)\n'
+          'YASP' => 'http://yasp.co/matches/$',
+          'Dotabuff' => 'http://www.dotabuff.com/matches/$)'
         }
       }
+    end
+
+    def validate_options
+      errors.add(:base, "At least one player name is required") unless options['player_names'].present? and options['player_names'].size > 0
+
+      options['player_names'].each do |id, name|
+        Integer(id) rescue errors.add(:base, "Key of player name must be numeric")
+      end if options['player_names'].respond_to? :each
+
+      options['sites'].each do |name, url|
+        errors.add(:base, "Url must contain a placeholder $ for match id") unless url.include? '$'
+      end if options['sites'].respond_to? :each
+
+      errors.add(:base, "Invalid format") unless ['markdown'].include? options['format']
     end
 
     def receive(incoming_events)
       incoming_events.each do |event|
         interpolate_with(event) do
-          #p event
-          #result = interpolated['result']
           result = event[:payload]
           fmt = format(result['result'])
           create_event :payload => {'message' => fmt}
@@ -76,9 +88,14 @@ module Agents
       id = match['match_id']
 
       "#{player_names.join(", ")} #{win ? "won" : "lost"} #{mode} after #{time}. " +
-      "[YASP](http://yasp.co/matches/#{id}) " +
-      "[Dotabuff](http://www.dotabuff.com/matches/#{id})\n" +
+      format_sites(id) + '\n' +
       format_sprees(player_names, win)
+    end
+
+    def format_sites(match_id)
+      options['sites'].map do |name, url|
+        "[#{name}](#{url.sub('$', match_id.to_s)})"
+      end.join(' ')
     end
 
     def format_sprees(player_names, win)

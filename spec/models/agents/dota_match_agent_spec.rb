@@ -19,13 +19,43 @@ fdescribe Agents::DotaMatchAgent do
           '56706937' => 'Jane'
         },
         'sites' => {
-          'YASP' => 'http://yasp.co/matches/#',
-          'Dotabuff' => 'http://www.dotabuff.com/matches/#)'
+          'YASP' => 'http://yasp.co/matches/$',
+          'Dotabuff' => 'http://www.dotabuff.com/matches/$)'
         }
       }
       @checker = Agents::DotaMatchAgent.new(:name => "dota", :options => @valid_options, :keep_events_for => 2.days)
       @checker.user = users(:bob)
       @checker.save!
+    end
+
+    describe 'validation' do
+      before do
+        expect(@checker).to be_valid
+      end
+
+      describe 'of player names' do
+        it 'checks for presence' do
+          @checker.options['player_names'] = ""
+          expect(@checker).not_to be_valid
+          @checker.options['player_names'] = {}
+          expect(@checker).not_to be_valid
+        end
+
+        it 'verifies the id is numeric' do
+          @checker.options['player_names'] = {"foo" => "bar"}
+          expect(@checker).not_to be_valid
+        end
+      end
+
+      it 'verifies that sites contain a placeholder' do
+          @checker.options['sites'] = {"foo" => "http://bar"}
+          expect(@checker).not_to be_valid
+      end
+
+      it 'verifies the format' do
+        @checker.options['format'] = "hans"
+        expect(@checker).not_to be_valid
+      end
     end
 
     describe '#receive' do
