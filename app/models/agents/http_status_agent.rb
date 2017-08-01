@@ -1,3 +1,5 @@
+require 'time_tracker'
+
 module Agents
 
   class HttpStatusAgent < Agent
@@ -11,7 +13,8 @@ module Agents
     default_schedule "every_12h"
 
     form_configurable :url
-    form_configurable :disable_redirect_follow, type: :array, values: ['true', 'false']
+    form_configurable :disable_redirect_follow, type: :boolean
+    form_configurable :changes_only, type: :boolean
     form_configurable :headers_to_save
 
     description <<-MD
@@ -20,6 +23,8 @@ module Agents
       Specify a `Url` and the Http Status Agent will produce an event with the HTTP status code. If you specify one or more `Headers to save` (comma-delimited) as well, that header or headers' value(s) will be included in the event.
 
       The `disable redirect follow` option causes the Agent to not follow HTTP redirects. For example, setting this to `true` will cause an agent that receives a 301 redirect to `http://yahoo.com` to return a status of 301 instead of following the redirect and returning 200.
+
+      The `changes only` option causes the Agent to report an event only when the status changes. If set to false, an event will be created for every check.  If set to true, an event will only be created when the status changes (like if your site goes from 200 to 500).
     MD
 
     event_description <<-MD
@@ -61,7 +66,8 @@ module Agents
     def receive(incoming_events)
       incoming_events.each do |event|
         interpolate_with(event) do
-          check_this_url interpolated[:url], header_array(interpolated[:headers_to_save])
+          check_this_url interpolated[:url],
+                         header_array(interpolated[:headers_to_save])
         end
       end
     end
@@ -72,14 +78,18 @@ module Agents
       # Track time
       measured_result = TimeTracker.track { ping(url) }
 
+      current_status = measured_result.result ? measured_result.status.to_s : ''
+      return if options['changes_only'] == 'true' && current_status == memory['last_status'].to_s
+
       payload = { 'url' => url, 'response_received' => false, 'elapsed_time' => measured_result.elapsed_time }
 
       # Deal with failures
       if measured_result.result
-        payload.merge!({ 'response_received' => true, 'status' => measured_result.status.to_s })
+        final_url = boolify(interpolated['disable_redirect_follow']) ? url : measured_result.result.env.url.to_s
+        payload.merge!({ 'final_url' => final_url, 'redirected' => (url != final_url), 'response_received' => true, 'status' => current_status })
         # Deal with headers
         if local_headers.present?
-          header_results = measured_result.result.headers.select {|header, value| local_headers.include?(header)}
+          header_results = measured_result.result.headers.slice(*local_headers)
           # Fill in headers that we wanted, but weren't returned
           local_headers.each { |header| header_results[header] = nil unless header_results.has_key?(header) }
           payload.merge!({ 'headers' => header_results })

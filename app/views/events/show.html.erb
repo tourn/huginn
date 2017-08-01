@@ -1,3 +1,5 @@
+<% content_for :title, "Event " + @event.id.to_s -%>
+
 <div class='container'>
   <div class='row'>
     <div class='col-md-12'>
@@ -20,7 +22,7 @@
 
       <% if @event.lat && @event.lng %>
         <% content_for :head do -%>
-<%= javascript_include_tag "https://maps.googleapis.com/maps/api/js?sensor=false" %>
+<%= javascript_include_tag "https://maps.googleapis.com/maps/api/js?key=#{@event.agent.options[:api_key]}" %>
 <%= javascript_include_tag "map_marker" %>
         <% end -%>
 

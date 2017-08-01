@@ -53,8 +53,14 @@ Install the required packages (needed to compile Ruby and native extensions to R
     sudo apt-get install -y runit build-essential git zlib1g-dev libyaml-dev libssl-dev libgdbm-dev libreadline-dev libncurses5-dev libffi-dev curl openssh-server checkinstall libxml2-dev libxslt-dev libcurl4-openssl-dev libicu-dev logrotate python-docutils pkg-config cmake nodejs graphviz
 
 
-## 2. Ruby
+### Debian Stretch
 
+Since Debian Stretch, `runit` isn't started anymore automatically, but this gets handled by the init system. Additionally, Ruby requires the OpenSSL 1.0 development packages instead of 1.1. For a default installation use these packages:
+
+     sudo apt-get install -y runit-systemd libssl1.0-dev
+
+
+## 2. Ruby
 
 The use of Ruby version managers such as [RVM](http://rvm.io/), [rbenv](https://github.com/sstephenson/rbenv) or [chruby](https://github.com/postmodern/chruby) with Huginn in production frequently leads to hard-to-diagnose problems. Version managers are not supported and we strongly advise everyone to follow the instructions below to use a system Ruby.
 
@@ -65,8 +71,8 @@ Remove the old Ruby versions if present:
 Download Ruby and compile it:
 
     mkdir /tmp/ruby && cd /tmp/ruby
-    curl -L --progress http://cache.ruby-lang.org/pub/ruby/2.3/ruby-2.3.0.tar.bz2 | tar xj
-    cd ruby-2.3.0
+    curl -L --progress http://cache.ruby-lang.org/pub/ruby/2.3/ruby-2.3.4.tar.bz2 | tar xj
+    cd ruby-2.3.4
     ./configure --disable-install-rdoc
     make -j`nproc`
     sudo make install
@@ -90,7 +96,9 @@ Install the database packages
     # Pick a MySQL root password (can be anything), type it and press enter,
     # retype the MySQL root password and press enter
 
-Check the installed MySQL version (remeber if its >= 5.5.3 for the `.env` configuration done later):
+For Debian Stretch, replace `libmysqlclient-dev` with `default-libmysqlclient-dev`. See the [additional notes section](#additional-notes) for more information.
+
+Check the installed MySQL version (remember if its >= 5.5.3 for the `.env` configuration done later):
 
     mysql --version
 
@@ -110,7 +118,7 @@ Create a user for Huginn do not type the `mysql>`, this is part of the prompt. C
 
 Ensure you can use the InnoDB engine which is necessary to support long indexes
 
-    mysql> SET storage_engine=INNODB;
+    mysql> SET default_storage_engine=INNODB;
 
     # If this fails, check your MySQL config files (e.g. `/etc/mysql/*.cnf`, `/etc/mysql/conf.d/*`)
     # for the setting "innodb = off"
@@ -134,7 +142,7 @@ You should now see `ERROR 1049 (42000): Unknown database 'huginn_production'` wh
 You are done installing the database and can go back to the rest of the installation.
 
 
-## 6. Huginn
+## 5. Huginn
 
 ### Clone the Source
 
@@ -264,7 +272,7 @@ Export the init scripts:
 
     sudo bundle exec rake production:status
 
-## 7. Nginx
+## 6. Nginx
 
 **Note:** Nginx is the officially supported web server for Huginn. If you cannot or do not want to use Nginx as your web server, the wiki has a page on how to configure [apache](https://github.com/cantino/huginn/wiki/Apache-Huginn-configuration).
 
@@ -407,3 +415,8 @@ When you want to monitor the background processes you can easily watch all the f
 ### Still having problems? :crying_cat_face:
 
 You probably found an error message or exception backtrace you could not resolve. Please create a new [issue](https://github.com/cantino/huginn/issues) and include as much information as you could gather about the problem your are experiencing.
+
+
+### Additional notes
+
+Debian Stretch switched from MySQL to [MariaDB](https://mariadb.org/). All packages with `mysql` in the name are just wrappers around the MariaDB ones, with some containing some compatibility symlinks. Huginn should also work fine with the MariaDB packages directly, although to keep the installation instructions more compact, they still use the MySQL packages.

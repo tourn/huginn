@@ -53,6 +53,11 @@ describe DotHelper do
         ]
         @foo.reload
         @bar2.reload
+
+        # Fix the order of receivers
+        @agents.each do |agent|
+          stub.proxy(agent).receivers { |orig| orig.order(:id) }
+        end
       end
 
       it "generates a DOT script" do
@@ -77,6 +82,7 @@ describe DotHelper do
         expect(agents_dot(@agents, rich: true)).to match(%r{
           \A
           digraph \x20 "Agent \x20 Event \x20 Flow" \{
+            (graph \[ [^\]]+ \];)?
             node \[ [^\]]+ \];
             edge \[ [^\]]+ \];
             (?<foo>\w+) \[label=foo,tooltip="Dot \x20 Foo",URL="#{Regexp.quote(agent_path(@foo))}"\];

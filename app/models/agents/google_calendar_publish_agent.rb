@@ -32,7 +32,7 @@ module Agents
 
       `google` `service_account_email` - The authorised service account.
 
-      `google` `key_file` OR `google` `key` - The path to the key file or the key itself.  Liquid formatting is supported if you want to use a Credential.  (E.g., `{% credential google_key %}`)
+      `google` `key_file` OR `google` `key` - The path to the key file or the key itself.  [Liquid](https://github.com/cantino/huginn/wiki/Formatting-Events-using-Liquid) formatting is supported if you want to use a Credential.  (E.g., `{% credential google_key %}`)
 
       `google` `key_secret` - The secret for the key, typically 'notasecret'
 
@@ -91,7 +91,8 @@ module Agents
     end
 
     def receive(incoming_events)
-     incoming_events.each do |event|
+      require 'google_calendar'
+      incoming_events.each do |event|
         calendar = GoogleCalendar.new(interpolate_options(options, event), Rails.logger)
 
         calendar_event = JSON.parse(calendar.publish_as(interpolated(event)['calendar_id'], event.payload["message"]).response.body)
