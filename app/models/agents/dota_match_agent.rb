@@ -79,7 +79,8 @@ module Agents
       18 => "Ability Draft",
       20 => "All Random Death Match",
       21 => "1v1 Solo Mid",
-      22 => "All Pick"
+      22 => "All Pick",
+      23 => "Turbo All Pick"
     }
 
     def format(match)
